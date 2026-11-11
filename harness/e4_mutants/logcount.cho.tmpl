@@ -1,0 +1,70 @@
+import std.buffer;
+import std.io;
+
+fn load[&f, &o](fs: &f Fs("{B}/data"), out: &!o [byte]) -> [fs_read("{B}/data")] int {
+    return fs_read(fs, "{B}/data/input.log", out);
+}
+
+fn count_errors[&r](data: &r [byte], n: int) -> [] int {
+    var i = 0;
+    var count = 0;
+    var has = false;
+    while i < n {
+        let c = int_of(data[i]);
+        if c == 10 {
+            if has {
+                count = count + 1;
+            }
+            has = false;
+        } else if i + 5 <= n && c == 69 && int_of(data[i + 1]) == 82 && int_of(data[i + 2]) == 82 && int_of(data[i + 3]) == 79 && int_of(data[i + 4]) == 82 {
+            has = true;
+        }
+        i = i + 1;
+    }
+    if has {
+        count = count + 1;
+    }
+    return count;
+}
+
+fn show[&h, &i](heap: &!h Heap, io: &!i Io, count: int) -> [heap, io_write] int {
+    var out = buffer.empty(heap, 32);
+    out = buffer.push_nat(heap, out, count);
+    out = buffer.push(heap, out, byte_of(10));
+    borrow out as &t in {
+        io.write_all(io, buffer.bytes(t));
+    }
+    buffer.drop(heap, out);
+    return 0;
+}
+
+fn main(world: World) -> [] int {
+    let Split { io, ffi, fs, heap, args } = split(world);
+    release(ffi);
+    release(args);
+    let data = narrow(fs, "{B}/data");
+    var status = 1;
+    borrow mut heap as &!h in {
+        borrow mut io as &!i in {
+            let buf = box_slice(h, 8388608, byte_of(0));
+            var n = 0 - 1;
+            borrow data as &f in {
+                borrow mut buf as &!w in {
+                    n = load(f, contents(w));
+                }
+            }
+            if n >= 0 {
+                var count = 0;
+                borrow buf as &rd in {
+                    count = count_errors(contents(rd), n);
+                }
+                status = show(h, i, count);
+            }
+            unbox_slice(h, buf);
+        }
+    }
+    release(data);
+    release(heap);
+    release(io);
+    return status;
+}

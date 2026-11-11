@@ -1,0 +1,31 @@
+import std.dirs;
+
+fn main(world: World) -> [] int {
+    let Split { io, ffi, fs, heap, args, net, clock, signals } = split(world);
+    release(io); release(ffi); release(args); release(heap); release(net); release(clock); release(signals);
+    let data = narrow(fs, "/tmp/e4-repro/data");
+    var got = 0;
+    borrow data as &f in {
+        match open_dir(f, "/tmp/e4-repro/data") {
+            DirOpened::Ok(d) => {
+                var held = d;
+                borrow held as &h in {
+                    match dirs.open_file(h, "NAME") {
+                        Opened::Ok(file) => {
+                            got = 1;
+                            file_close(file);
+                        }
+                        Opened::Failed(why) => {
+                        }
+                    }
+                }
+                dir_close(held);
+            }
+            DirOpened::Failed(why) => {
+            }
+        }
+    }
+    release(data);
+    if got == 1 { return 3; }
+    return 0;
+}
