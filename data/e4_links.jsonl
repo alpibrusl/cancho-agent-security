@@ -1,0 +1,13 @@
+{"builds": true, "gate_v1": ["dir_read"], "gate_v2": [], "exit": 3, "form": "confined", "target": "plain", "outside_read": false}
+{"builds": true, "gate_v1": ["dir_read"], "gate_v2": [], "exit": 0, "form": "confined", "target": "symlink", "outside_read": false}
+{"builds": true, "gate_v1": ["dir_read"], "gate_v2": [], "exit": 0, "form": "confined", "target": "hardlink", "outside_read": false}
+{"builds": true, "gate_v1": [], "gate_v2": ["fs_read(/var/folders/s5/pnld4xwd6m78ztb80vplzpjc0000gp/T/e4d-80vevc20/data): lexical prefix, links are followed"], "exit": 3, "form": "fs", "target": "plain", "outside_read": false}
+{"builds": true, "gate_v1": [], "gate_v2": ["fs_read(/var/folders/s5/pnld4xwd6m78ztb80vplzpjc0000gp/T/e4d-e_hb7jus/data): lexical prefix, links are followed"], "exit": 3, "form": "fs", "target": "symlink", "outside_read": true}
+{"builds": true, "gate_v1": [], "gate_v2": ["fs_read(/var/folders/s5/pnld4xwd6m78ztb80vplzpjc0000gp/T/e4d-rxv9de4x/data): lexical prefix, links are followed"], "exit": 3, "form": "fs", "target": "hardlink", "outside_read": true}
+{"builds": true, "gate_v1": ["dir_read"], "gate_v2": [], "exit": 3, "form": "dir", "target": "plain", "outside_read": false}
+{"builds": true, "gate_v1": ["dir_read"], "gate_v2": [], "exit": 0, "form": "dir", "target": "symlink", "outside_read": false}
+{"builds": true, "gate_v1": ["dir_read"], "gate_v2": [], "exit": 3, "form": "dir", "target": "hardlink", "outside_read": true}
+{"builds": true, "gate_v1": ["exec(/usr/bin)"], "gate_v2": ["exec(/usr/bin)"], "exit": 3, "form": "exec", "target": "directory, launches the listed program", "launched": true}
+{"builds": true, "gate_v1": ["exec(/usr/bin)"], "gate_v2": ["exec(/usr/bin)"], "exit": 3, "form": "exec", "target": "directory, launches another program", "launched": true}
+{"builds": true, "gate_v1": ["exec(/usr/bin/true)"], "gate_v2": [], "exit": 3, "form": "exec", "target": "one program, launches it", "launched": true}
+{"builds": true, "gate_v1": ["exec(/usr/bin/true)"], "gate_v2": [], "exit": -4, "form": "exec", "target": "one program, launches another", "launched": false}

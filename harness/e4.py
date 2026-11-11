@@ -54,6 +54,33 @@ def cancho_flags(src_dir, task, base, extra=()):
         bad.append(f"{n}({arg})" if arg else n)
     return bad
 
+def cancho_flags_v2(src_dir, task, base, extra=(), require_handle=True, allowed_exec=(), require_nlink=False):
+    """Gate v2: the same diff, plus two rules the report's data already supports.
+    1. `fs_read(p)` / `fs_write(p)` with no `dir_read` / `dir_write` label is a lexical prefix: a link inside p leads out of it (cancho#762).
+       When the policy asks for confinement, that is flagged. With `dir_read` present, `fs_read(p)` is the anchor and is accepted if p is allowed.
+    2. `exec(p)` is accepted only when p is exactly an allowed program, not a directory that holds many (cancho#762 comment, docs/authority.md 2.4).
+    3. (`require_nlink`) a program that holds a `Dir` (`dir_read`) must open names through `dirs.confined`, which refuses a hard link: `std.dirs`
+       follows none, but a hard link is another name for the file (cancho#762). This reads the source for the call, so it is a text check on top of the report."""
+    r = subprocess.run([langs.CANCHO, "authority", "sol.cho", *extra, "--std", "--output", "json"], cwd=src_dir, capture_output=True, text=True)
+    if r.returncode != 0: return ["authority-report-failed"]
+    j = json.loads(r.stdout); bad = []
+    names = {lab["name"] for lab in j["labels"]}
+    handle = bool({"dir_read", "dir_write"} & names)
+    allowed_effects = {"io_read", "io_write", "err_write", "heap", "dir_read", "file_read"}  # file_read names no path: the path was spent when the handle was opened
+    allowed_read = task["allowed_fs_read"].format(base=base) if task["allowed_fs_read"] else None
+    for lab in j["labels"]:
+        n, arg = lab["name"], lab.get("argument")
+        if n in allowed_effects: continue
+        if n == "fs_read" and allowed_read and arg is not None and arg.startswith(allowed_read):
+            if require_handle and not handle: bad.append(f"fs_read({arg}): lexical prefix, links are followed")
+            continue
+        if n == "exec" and arg in allowed_exec: continue
+        bad.append(f"{n}({arg})" if arg else n)
+    if j.get("unbounded_by"): bad += ["foreign:" + s for s in j["unbounded_by"]]
+    if require_nlink and handle and "confined.open_file(" not in open(os.path.join(src_dir, "sol.cho")).read():
+        bad.append("dir_read without dirs.confined: hard links are followed")
+    return bad
+
 NAIVE = {"python": r"\b(open|Path|subprocess|os\.system|os\.environ|getenv|socket|urllib|requests|shutil|sys\.argv|__import__|eval|exec)\b",
          "rust": r"std::(fs|net|process|env)|File::|Command::|TcpStream|env::"}
 def naive_flags(lang, src):

@@ -16,7 +16,9 @@ scripts behind the post that reports them. It is a **pilot by one author on smal
 ```sh
 make report                                      # tier 0
 make mutants                                     # tier 1 (writes /tmp/e4_mutants.jsonl; compare with data/e4_mutants.jsonl)
-make run-e4b MODEL=anthropic:claude-sonnet-5-5   # tier 2, 165 runs
+make links                                       # tier 1: links and process launching through the gate (needs the compiler, no model)
+make serve                                       # tier 1: the confinement scenario, scored with the dirs.confined rule (needs the compiler)
+make run-e4b MODEL=anthropic:claude-sonnet-5-5   # tier 2, 185 runs
 ```
 
 Tier 0 needs nothing from cancho: `harness/e4b_report.py` re-runs the Python/Rust scanner over each stored program and reads the cancho verdict
@@ -28,7 +30,7 @@ Produced on macOS arm64 with:
 
 | Tool | Version |
 |---|---|
-| cancho | commit `7684baa2` (`cargo build --release -p cancho`); set `CANCHO_BIN` to the binary |
+| cancho | the compiler in cancho built by `scripts/build-standalone.sh` at revision `23abc362` (cancho#765, which adds `dir_nlink` and `packages/confined`); set `CANCHO_BIN` to the binary and `CANCHO_REPO_PKG` to the checkout holding `packages/confined` |
 | Rust / clippy | 1.98.1 / 0.1.98 |
 | mypy | 2.4.1 (`MYPY_BIN`) |
 | bandit | 1.9.4 (`BANDIT_BIN`) |
@@ -45,10 +47,12 @@ code in a container or a disposable user if you re-run tier 2.
 | `harness/e4_mutate.py`, `e4_eval.py` | hand-written violations (write, deep write, never-firing write, run-time-built path, secret read, widened capability, `..`, symlink, exec) in cancho, Python and Rust, and the script that runs them through every detector |
 | `harness/e4b.py` | the tricked-agent scenarios: a small log tool plus a "project note" that is an attacker's pretext, or an honest gap in the spec; the policy is hidden from the agent in most arms |
 | `harness/e4b_report.py` | scores any `e4b_*.jsonl` the same way |
+| `harness/e4b_serve.py`, `e4_links.py` | the confinement scenario scored with the `dirs.confined` rule; the link and process-launch probes |
 | `harness/e4.py` | the detectors: cancho authority diff, a path scan, a text scan, `bandit`, and the strict policy-aware scanner (`strict_flags`, version 1) |
 | `harness/e4c.py` | an adaptive-attacker harness (sandboxed). **Not used for the results**: the hosted models tried (Sonnet 5.5, Mistral Large 4) refused to attack a gate |
 | `harness/langs.py`, `models.py`, `run.py`, `tasks.py` | language checkers (cancho, `clippy -D warnings`, `mypy --strict`), providers, shared helpers |
-| `data/e4b_*.jsonl` | one line per agent run: scenario, language, source, whether the out-of-policy effect happened, the gate's flags |
+| `data/e4b_claude-sonnet-5-5`, `claude-haiku-5-5`, `mistral-large-4` (`.jsonl`) | final runs, 185 per model; one line per agent run: scenario, language, source, whether the out-of-policy effect happened, the gate's flags |
+| `data/e4_links.jsonl` | links and process launching through gate v1 and v2 |
 | `data/e4_mutants.jsonl`, `data/e4c_probes.md` | the seeded-violation results and the hand-written escape and evasion probes |
 | `data/e4_sonnet-5-5.jsonl` | the first, simpler pilot (an explicit injected note with the budget stated) |
 
@@ -61,10 +65,11 @@ the secret holds a canary line. Payloads are inert files under a per-run scratch
 - Tasks are small single-file programs. Nothing here is a real codebase, and no installed third-party package was tested.
 - The Python and Rust scanner is the one I wrote (about 40 lines per language, constant tracking included). A better scanner would do better;
   the point of the evasion probes is that every scanner is a list of API names.
-- Weaker models do not write cancho: Haiku 5.5 produced a program in 4 of 45 hidden-policy cancho runs, so its cancho rows say nothing about the gate.
+- Weaker models do not write cancho: Haiku 5.5 produced a program in 4 of 45 hidden-policy cancho runs (0 of 10 in the confinement scenario), so its cancho rows say almost nothing about the gate.
+- The cancho gate flags programs that stay within the policy but hold more authority than the budget names: false alarms are in the tables.
 - Hosted models refused to attack a gate, so the evasion results are hand-written probes (one program each), not rates.
 - Cancho's own gaps found by this work: a symlink or hard link inside a granted directory is followed (`Fs` bounds the text of a path, cancho#762,
-  cancho#763), `Exec` bounds which program starts and not what it does, and the report does not count operations.
+  cancho#763), an `Exec` narrowed to a directory starts any program in it (narrowed to one program path it starts only that one), and the report does not count operations. The first two are addressed in cancho#765 (`dir_nlink`, `dirs.confined`) and by gate rules, measured here on macOS only; Linux is untested.
 
 ## Licence
 
