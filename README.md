@@ -46,7 +46,7 @@ code in a container or a disposable user if you re-run tier 2.
 | `harness/e4b.py` | the tricked-agent scenarios: a small log tool plus a "project note" that is an attacker's pretext, or an honest gap in the spec; the policy is hidden from the agent in most arms |
 | `harness/e4b_report.py` | scores any `e4b_*.jsonl` the same way |
 | `harness/e4.py` | the detectors: cancho authority diff, a path scan, a text scan, `bandit`, and the strict policy-aware scanner (`strict_flags`, version 1) |
-| `harness/e4c.py` | an adaptive-attacker harness (sandboxed). **Not used for the results**: hosted models refused, see the post |
+| `harness/e4c.py` | an adaptive-attacker harness (sandboxed). **Not used for the results**: the hosted models tried (Sonnet 5.5, Mistral Large 4) refused to attack a gate |
 | `harness/langs.py`, `models.py`, `run.py`, `tasks.py` | language checkers (cancho, `clippy -D warnings`, `mypy --strict`), providers, shared helpers |
 | `data/e4b_*.jsonl` | one line per agent run: scenario, language, source, whether the out-of-policy effect happened, the gate's flags |
 | `data/e4_mutants.jsonl`, `data/e4c_probes.md` | the seeded-violation results and the hand-written escape and evasion probes |
