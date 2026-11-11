@@ -18,6 +18,7 @@ make report                                      # tier 0
 make mutants                                     # tier 1 (writes /tmp/e4_mutants.jsonl; compare with data/e4_mutants.jsonl)
 make links                                       # tier 1: links and process launching through the gate (needs the compiler, no model)
 make serve                                       # tier 1: the confinement scenario, scored with the dirs.confined rule (needs the compiler)
+make example MODEL=anthropic:claude-sonnet-5-5   # tier 2, small: the post's worked example, 6 agent runs
 make run-e4b MODEL=anthropic:claude-sonnet-5-5   # tier 2, 185 runs
 ```
 

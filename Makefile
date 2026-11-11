@@ -1,6 +1,6 @@
 PY ?= python3
 
-.PHONY: report mutants links serve run-e4b
+.PHONY: report mutants links serve example run-e4b
 
 # Tier 0: re-score the committed runs. Needs only Python.
 report:
@@ -15,6 +15,11 @@ links:
 	$(PY) harness/e4_links.py --out /tmp/e4_links.jsonl
 serve:
 	$(PY) harness/e4b_serve.py data/e4b_*.jsonl
+
+# Tier 2, small: the worked example of the post (the cache note, hidden and stated rule, three languages, one run each).
+example:
+	@test -n "$(MODEL)" || (echo "usage: make example MODEL=anthropic:claude-sonnet-5-5"; exit 2)
+	E4B_ONLY=cache $(PY) harness/e4b.py --model $(MODEL) --out data/example_cache.jsonl --seeds 1 --jobs 3
 
 # Tier 2: fresh agent runs. Needs an API key file for the provider. Results will differ from data/.
 run-e4b:
